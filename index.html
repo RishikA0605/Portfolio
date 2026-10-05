@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Rishika Raj · Full Stack Developer</title>
+    <meta
+      name="description"
+      content="Rishika Raj, Full Stack Developer. I build the interface, the API behind it, and the database under both. React, Next.js, Node.js, PostgreSQL."
+    />
+    <meta name="author" content="Rishika Raj" />
+    <meta name="theme-color" content="#0f1226" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f4f2fb" media="(prefers-color-scheme: light)" />
+    <meta name="color-scheme" content="dark light" />
+
+    <!-- Open Graph / social -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Rishika Raj · Full Stack Developer" />
+    <meta
+      property="og:description"
+      content="Full Stack Developer. I build the interface, the API behind it, and the database under both."
+    />
+    <meta property="og:image" content="/og.png" />
+    <meta property="og:image:alt" content="A floating three-layer stack: UI, API and DB." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Rishika Raj · Full Stack Developer" />
+    <meta
+      name="twitter:description"
+      content="Full Stack Developer. I build the interface, the API behind it, and the database under both."
+    />
+    <meta name="twitter:image" content="/og.png" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&display=swap"
+    />
+
+    <!-- Critical inline styles so the loader paints before any JS -->
+    <style>
+      html { background: #0f1226; }
+      @media (prefers-color-scheme: light) { html { background: #f4f2fb; } }
+      #loader {
+        position: fixed; inset: 0; z-index: 100; display: grid; place-items: center;
+        background: #0f1226; color: #edeaf5;
+        font: 500 clamp(13px, 1.4vw, 16px)/1.9 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: light) { #loader { background: #f4f2fb; color: #15172b; } }
+      #loader .term { min-width: min(420px, 84vw); }
+      #loader .line { opacity: 0; white-space: pre; }
+      #loader .line.on { opacity: 1; }
+      #loader .ok { color: #8ce0b0; }
+      #loader .caret { display: inline-block; width: .6em; height: 1.1em; vertical-align: -0.2em; background: currentColor; animation: blink 1s steps(1) infinite; }
+      @keyframes blink { 50% { opacity: 0; } }
+    </style>
+  </head>
+  <body>
+    <div id="loader" role="status" aria-live="polite" aria-label="Loading portfolio">
+      <div class="term">
+        <div class="line">&gt; booting portfolio v2.0</div>
+        <div class="line">&gt; loading frontend ... <span class="ok">ok</span></div>
+        <div class="line">&gt; loading backend ... <span class="ok">ok</span></div>
+        <div class="line">&gt; loading database ... <span class="ok">ok</span></div>
+        <div class="line">&gt; ready <span class="caret"></span></div>
+      </div>
+    </div>
+
+    <div id="root"></div>
+
+    <noscript>
+      <style>#loader { display: none; }</style>
+      <main style="font-family: system-ui, sans-serif; color: #edeaf5; padding: 48px 24px; max-width: 640px; margin: auto">
+        <h1>Rishika Raj · Full Stack Developer</h1>
+        <p>I build the interface, the API behind it, and the database under both.</p>
+        <p>
+          <a style="color:#7cc6ff" href="mailto:rr4175653@gmail.com">rr4175653@gmail.com</a> ·
+          <a style="color:#7cc6ff" href="https://www.linkedin.com/in/rishikaraj724">LinkedIn</a> ·
+          <a style="color:#7cc6ff" href="https://github.com/RishikA0605">GitHub</a> ·
+          <a style="color:#7cc6ff" href="https://leetcode.com/u/Rishika_9661/">LeetCode</a>
+        </p>
+      </main>
+    </noscript>
+
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
