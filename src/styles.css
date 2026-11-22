@@ -9,6 +9,11 @@
   --ui: #7cc6ff;
   --api: #ffb86b;
   --db: #8ce0b0;
+  /* readability layers: used where text sits on top of the 3D scene */
+  --scrim: rgba(15, 18, 38, 0.62);
+  --scrim-strong: rgba(15, 18, 38, 0.82);
+  --text-glow: rgba(15, 18, 38, 0.9);
+  --header-h: 72px;
 
   --font-mono: "ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "Liberation Mono", monospace;
   --font-sans: "Bricolage Grotesque", system-ui, -apple-system, sans-serif;
@@ -19,13 +24,16 @@
     --bg: #f4f2fb;
     --bg-alpha: rgba(244, 242, 251, 0.7);
     --fg: #15172b;
-    --muted: #6b6890;
+    --muted: #5b5880;
     --accent: #118a7f;
     --card: #ffffff;
     --border: rgba(0, 0, 0, 0.08);
     --ui: #1f8ad1;
     --api: #d97816;
     --db: #159448;
+    --scrim: rgba(244, 242, 251, 0.66);
+    --scrim-strong: rgba(255, 255, 255, 0.86);
+    --text-glow: rgba(244, 242, 251, 0.95);
   }
 }
 
@@ -68,6 +76,11 @@ html {
   -webkit-font-smoothing: antialiased;
 }
 
+/* clip (not hidden) so position: sticky keeps working */
+body {
+  overflow-x: clip;
+}
+
 html.is-loading,
 html.is-loading body {
   overflow: hidden;
@@ -108,6 +121,18 @@ h4 {
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.04em;
+}
+
+/* soft halo so copy stays the focus when 3D objects pass behind it */
+h1,
+h2,
+h3,
+.lede,
+.body-l,
+.eyebrow,
+.chip,
+.tech__row dt {
+  text-shadow: 0 1px 2px var(--text-glow), 0 0 18px var(--text-glow);
 }
 
 .display {
@@ -245,20 +270,24 @@ h4 {
   display: flex;
 }
 
+/* Solid letters that fade out toward the bottom: readable at a glance,
+   but quiet enough to stay behind the content. One element, one colour. */
 .backdrop-name {
   font-size: clamp(120px, 30vw, 400px);
   font-weight: 800;
-  color: transparent;
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.04);
   white-space: nowrap;
-  line-height: 0.8;
+  line-height: 0.9;
   letter-spacing: -0.05em;
   padding-left: 5vw;
+  color: transparent;
+  background: linear-gradient(180deg, rgba(237, 234, 245, 0.09) 0%, rgba(237, 234, 245, 0.025) 70%, rgba(237, 234, 245, 0) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 @media (prefers-color-scheme: light) {
   .backdrop-name {
-    -webkit-text-stroke: 1px rgba(0, 0, 0, 0.04);
+    background-image: linear-gradient(180deg, rgba(21, 23, 43, 0.08) 0%, rgba(21, 23, 43, 0.02) 70%, rgba(21, 23, 43, 0) 100%);
   }
 }
 
@@ -773,29 +802,86 @@ h4 {
 
 /* ── Tech Stack ────────────────────────────────────────── */
 .tech {
-  height: 250vh;
+  /* ~50vh of scroll per logo showcase (6 logos) while the panel is pinned */
+  height: 400vh;
   padding: 0;
   display: block;
 }
 
 .tech__sticky {
   position: sticky;
-  top: 0;
-  height: 100vh;
+  /* JS lowers this below 0 when the panel is taller than the screen,
+     so every row can still be scrolled into view while pinned */
+  top: var(--tech-top, 0px);
+  min-height: 100vh;
+  min-height: 100svh;
   display: flex;
   align-items: center;
+  padding: calc(var(--header-h) + 8px) 0 24px;
+}
+
+/* frosted card: text stays crisp + in focus when a logo spins behind it */
+.tech .col {
+  background: var(--scrim);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 32px;
+}
+
+/* leave room for the 3D logo column on the left edge */
+.tech .wrap {
+  padding-left: 58px;
+  padding-right: 12px;
+}
+
+@media (min-width: 768px) {
+  .tech .wrap {
+    padding-left: 150px;
+    padding-right: 48px;
+  }
+
+  .tech .col--right {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .tech .col {
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+
+  .tech .eyebrow {
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+
+  .tech .h2 {
+    font-size: 30px;
+  }
+
+  .tech .chip {
+    padding: 4px 10px;
+    font-size: 12.5px;
+  }
+
+  .tech .chips {
+    gap: 6px;
+  }
 }
 
 .tech__groups {
-  margin-top: 48px;
+  margin-top: clamp(16px, 4vh, 48px);
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: clamp(12px, 2.6vh, 32px);
 }
 
 .tech__row {
   display: grid;
-  gap: 12px;
+  gap: 6px;
 }
 
 @media (min-width: 640px) {
@@ -1198,4 +1284,144 @@ h4 {
 .social:hover {
   background: var(--fg);
   color: var(--bg);
+}
+
+/* ── Mobile & tablet: 3D sits behind the copy, so frost the panels ── */
+@media (max-width: 1023px) {
+
+  .about .col,
+  .layers .col,
+  .contact .col,
+  .achievements .col {
+    background: var(--scrim);
+    backdrop-filter: blur(12px) saturate(1.2);
+    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px 20px;
+  }
+
+  .project__card,
+  .release__card,
+  .win {
+    background: var(--scrim-strong);
+  }
+}
+
+@media (max-width: 767px) {
+  .section {
+    padding: 96px 0;
+  }
+
+  .hero {
+    padding-top: 16vh;
+  }
+
+  .ver-tag {
+    margin-left: 6px;
+  }
+
+  .body-l {
+    max-width: none;
+  }
+
+  .diff {
+    font-size: 13px;
+    padding: 16px;
+    margin-top: 32px;
+  }
+
+  .layer-labels {
+    gap: 24px;
+    margin-top: 32px;
+  }
+
+  .layer-label__title {
+    font-size: 20px;
+  }
+
+  .projects__head {
+    margin-bottom: 10vh;
+  }
+
+  .project {
+    min-height: 90vh;
+  }
+
+  .project__card {
+    padding: 24px 20px;
+    border-radius: 18px;
+  }
+
+  .project__desc {
+    font-size: 16px;
+  }
+
+  .project__links {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .timeline {
+    padding-left: 24px;
+  }
+
+  .release__node {
+    left: -24px;
+  }
+
+  .release {
+    margin-bottom: 40px;
+  }
+
+  .release__card {
+    padding: 20px;
+  }
+
+  .release__period {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .release__role {
+    font-size: 20px;
+  }
+
+  .leet {
+    padding: 24px 20px;
+    margin: 32px 0;
+  }
+
+  .leet__head,
+  .win__head {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .stats {
+    gap: 20px;
+  }
+
+  .win {
+    padding: 20px;
+  }
+
+  .display--contact {
+    font-size: clamp(40px, 12vw, 56px);
+  }
+
+  .btn--xl {
+    flex-wrap: wrap;
+    padding: 18px 24px;
+    font-size: 20px;
+    gap: 4px 12px;
+    max-width: 100%;
+  }
+
+  .btn__mail {
+    font-size: 14px;
+    word-break: break-all;
+    order: 3;
+    width: 100%;
+  }
 }

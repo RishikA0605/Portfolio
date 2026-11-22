@@ -15,6 +15,14 @@ export function buildMaster(exp, { reduced }) {
   const scrollY = window.scrollY;
   const total = Math.max(1, (document.documentElement.scrollHeight - vh) / vh);
 
+  // Tech panel can be taller than a phone screen: pin it so its bottom edge
+  // meets the viewport bottom instead of its top (nothing gets cut off).
+  const techSticky = document.querySelector('.tech__sticky');
+  if (techSticky) {
+    techSticky.style.removeProperty('--tech-top');
+    techSticky.style.setProperty('--tech-top', `${Math.min(0, vh - techSticky.offsetHeight)}px`);
+  }
+
   const sec = (id) => {
     const el = document.getElementById(id);
     const top = el.getBoundingClientRect().top + scrollY;
@@ -88,17 +96,26 @@ export function buildMaster(exp, { reduced }) {
   });
   tl.to(labels, { autoAlpha: 0, y: -24, duration: 0.25, stagger: 0.04, ease: 'power2.in' }, at(Y.e - 0.4));
 
-  // ── 5 · Tech stack: slabs merged, laptop back, objects left; logos fly through ──
-  to({ ...side(Lx, { d: { stackY: 1.15, stackS: 0.5, lapY: -0.95, lapS: 0.75 } }), lapRotY: 0.45 }, Y.e, 0.95);
-  to({ logoFade: 1 }, T.s - 0.4, 0.3, 'none');
-  to({ logoP: 1 }, T.s - 0.3, Math.max(0.6, T.e - T.s - 0.15), 'none');
-  to({ logoFade: 0 }, T.e - 0.05, 0.6, 'power1.in');
+  // ── 5 · Tech stack: stack, laptop + particles step aside; logos own the stage ──
+  // Logos sit in a column on the left edge; one by one they fly to the empty
+  // space beside the text, spin 360° and return (see three/logos.js).
+  const panelEl = T.el.querySelector('.col');
+  if (panelEl) {
+    const r = panelEl.getBoundingClientRect();
+    exp.techPanel = { left: r.left, right: r.right };
+  }
+  to({ stackOp: 0, stackS: mobile ? 0.3 : 0.4, stackY: hh * 0.9, lapOp: 0, lapY: -hh * 2.6 }, Y.e - 0.1, 0.6, 'power2.in');
+  to({ partOp: 0 }, Y.e - 0.1, 0.6, 'power1.out');
+  to({ logoFade: 1 }, T.s - 0.7, 0.55, 'power2.out');
+  to({ logoP: 1 }, T.s - 0.1, Math.max(0.6, T.e - T.s), 'none');
+  to({ logoFade: 0 }, T.e - 0.05, 0.5, 'power1.in');
 
-  // ── 6 · Projects: laptop swings, lid opens wider ───────
+  // ── 6 · Projects: stack + laptop return, laptop swings, lid opens wider ──
+  to({ partOp: 1 }, P.s - 0.9, 0.85, 'power1.inOut');
   to(
     mobile
-      ? { stackY: 1.75, stackS: 0.34, lapY: 0.35, lapS: 0.62, lapRotY: reduced ? 0 : -1.2 }
-      : { stackX: Lx, stackY: 1.75, stackS: 0.42, lapX: Lx, lapY: -0.4, lapS: 1.0, lapRotY: reduced ? 0.2 : -1.2, lapRotX: 0.3 },
+      ? { stackX: 0, stackY: 1.75, stackS: 0.34, lapX: 0, lapY: 0.35, lapS: 0.62, lapRotY: reduced ? 0 : -1.2, stackOp: dim, lapOp: dim }
+      : { stackX: Lx, stackY: 1.75, stackS: 0.42, lapX: Lx, lapY: -0.4, lapS: 1.0, lapRotY: reduced ? 0.2 : -1.2, lapRotX: 0.3, stackOp: 1, lapOp: 1 },
     P.s - 0.9,
     0.85
   );

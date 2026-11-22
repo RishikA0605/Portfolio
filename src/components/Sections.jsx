@@ -40,10 +40,7 @@ export function Hero() {
             <a id="cta-talk" className="btn btn--primary" href="#contact">
               {hero.cta} <Arrow dir="e" />
             </a>
-            <span className="hint">
-              <span className="hint__wheel" aria-hidden="true" />
-              {hero.hint}
-            </span>
+
           </div>
         </div>
         <HeroFallback />

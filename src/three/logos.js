@@ -6,21 +6,21 @@ import { clamp, lerp, easeOut, easeInOut } from './utils.js';
 const LOGOS = [
   { id: 'react', name: 'React', color: '#61dafb' },
   { id: 'next', name: 'Next.js', color: '#000000' },
-  { id: 'ts', name: 'TypeScript', color: '#3178c6' },
   { id: 'tailwind', name: 'Tailwind CSS', color: '#38bdf8' },
   { id: 'node', name: 'Node.js', color: '#5fa04e' },
   { id: 'pg', name: 'PostgreSQL', color: '#336791' },
 ];
 
-const ROW_Z = -8;             // base depth of grid
+const COL_Z = -2;              // depth of the logo column + showcase
 const CAM_Z = 10;             // camera distance for depth math
-const IDLE_OPACITY = 0.6;     // opacity when resting in grid
+const TILE = 3;               // tile geometry size (world units at scale 1)
+const IDLE_OPACITY = 0.7;     // opacity when resting in the column
 const ZOOM_OPACITY = 0.95;    // opacity when zoomed in showcase
 // -------------------------------
 
 // Shared geometries and materials
 const tileShape = new THREE.Shape();
-(function() {
+(function () {
   const size = 3, r = 0.4, hs = size / 2;
   tileShape.moveTo(-hs + r, -hs);
   tileShape.lineTo(hs - r, -hs);
@@ -127,11 +127,11 @@ export function createLogos({ light }) {
 
   const items = LOGOS.map((logoData) => {
     const group = new THREE.Group();
-    
+
     // Brand color logic
     let cHex = logoData.color;
     if (logoData.id === 'next') cHex = light ? '#15172b' : '#edeaf5';
-    
+
     // Cinematic Base Tile: High metalness, low roughness for beautiful reflections
     const tileMat = new THREE.MeshStandardMaterial({
       color: cHex,
@@ -143,124 +143,147 @@ export function createLogos({ light }) {
       opacity: IDLE_OPACITY,
     });
     const tile = new THREE.Mesh(tileGeo, tileMat);
-    
+
     const edges = new THREE.LineSegments(tileEdgesGeo, edgeMat.clone());
-    
+
     const emblem = buildEmblem(logoData.id, cHex);
     const label = createLabelPlane(logoData.name);
     label.position.y = -2.4;
-    
+
     // Intense Cinematic Point Light behind for glow
     const pLight = new THREE.PointLight(cHex, 0, 10);
     pLight.position.set(0, 0, -1.5);
 
     group.add(tile, edges, emblem, label, pLight);
     masterGroup.add(group);
-    
+
     return { group, tile, edges, tileMat, pLight, emblem, label, baseColor: new THREE.Color(cHex) };
   });
 
   const slot = new THREE.Vector3();
   const center = new THREE.Vector3();
 
-  function update(time, { progress, fade, hw, hh, mobile, reduced, dt }) {
+  /**
+   * Logos rest in a vertical column on the left edge of the screen. As the
+   * Tech Stack section scrolls, each one in turn flies to the centre of the
+   * free space next to the text panel, spins a full 360° and flies home.
+   *
+   * @param {number} time
+   * @param {object} p
+   * @param {number} p.progress  0..1 showcase progress (one slice per logo)
+   * @param {number} p.fade      0..1 column visibility (also slides it in)
+   * @param {number} p.hw        half viewport width at z = 0 (world)
+   * @param {number} p.hh        half viewport height at z = 0 (world)
+   * @param {number} p.w         viewport width in px
+   * @param {{left:number,right:number}|null} p.panel  text panel bounds in px
+   */
+  function update(time, { progress, fade, hw, hh, w, panel, mobile, reduced }) {
     masterGroup.visible = fade > 0.01;
     if (!masterGroup.visible) return;
 
-    const depthK = (CAM_Z - ROW_Z) / CAM_Z;
+    const depthK = (CAM_Z - COL_Z) / CAM_Z;
     const halfW = hw * depthK;
     const halfH = hh * depthK;
+    const wpp = (halfW * 2) / w; // world units per CSS px at COL_Z
+    const pxToX = (px) => -halfW + px * wpp;
     const n = items.length;
 
-    // Grid layout on the Right side
-    const cols = mobile ? 3 : 2;
-    const spacingX = mobile ? 2.5 : 3.5;
-    const spacingY = mobile ? 3.0 : 4.0;
-    
-    // Top-Right resting position
-    const startX = mobile ? 0 : halfW * 0.45;
-    const startY = mobile ? halfH * 0.4 : halfH * 0.4; // Top part of the section
-    
-    // Showcase left-center position
-    center.set(mobile ? 0 : -halfW * 0.35, mobile ? -halfH * 0.2 : 0, -1.0);
-    
-    const smallScale = mobile ? 0.45 : 0.65;
-    const bigScale = mobile ? 1.6 : 2.5;
+    // ── column on the left edge ──
+    const span = halfH * (mobile ? 1.25 : 1.45);
+    const step = span / (n - 1);
+    const tile = Math.min(step * 0.8, (mobile ? 34 : 84) * wpp);
+    const smallScale = tile / TILE;
+    const margin = (mobile ? 8 : 40) * wpp;
+    const slideIn = (1 - easeOut(clamp(fade))) * (tile + margin) * 1.6;
+    const colX = -halfW + margin + tile / 2 - slideIn;
+    const colY = -halfH * 0.05;
+
+    // ── showcase: centre of the widest empty gap beside the text panel ──
+    let gapL = -halfW + margin * 2 + tile;
+    let gapR = halfW - margin;
+    if (panel && panel.right > panel.left) {
+      const pL = pxToX(panel.left);
+      const pR = pxToX(panel.right);
+      if (pL - gapL >= gapR - pR) gapR = pL;
+      else gapL = pR;
+    }
+    // no real gap (phones / narrow tablets) → showcase centred behind the
+    // frosted text panel: still visible, but the copy stays in focus
+    const compact = mobile || gapR - gapL < 2.2;
+    if (compact) {
+      if (panel && panel.right > panel.left) {
+        gapL = pxToX(panel.left);
+        gapR = pxToX(panel.right);
+      } else {
+        gapL = -halfW;
+        gapR = halfW;
+      }
+    }
+    const gap = gapR - gapL;
+    center.set((gapL + gapR) / 2, halfH * (compact ? 0.05 : 0.12), COL_Z);
+    const bigScale = clamp(Math.min(gap * (compact ? 0.55 : 0.62), halfH * 0.95) / TILE, smallScale * 1.6, 1.15);
+
+    const restDim = 1; // the column sits beside the text on every screen size now
+    const showDim = compact ? 0.8 : 1;
+    const labelDim = compact ? 0.45 : 1;
+    const slice = 1 / n;
 
     items.forEach((it, i) => {
-      // Calculate grid slot
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      
-      const offsetX = (col - (cols - 1) / 2) * spacingX;
-      const offsetY = -(row * spacingY); // Go down
-      
-      slot.set(startX + offsetX, startY + offsetY, ROW_Z);
-      
-      // We divide the total progress into `n` slices, one for each logo.
-      // But we pad it slightly so they don't immediately snap.
-      const slice = 1 / n;
-      const p = clamp((progress - i * slice) / slice); // 0 to 1 inside its own slice
-      const t = reduced ? 0 : p;
+      slot.set(colX, colY + span / 2 - i * step, COL_Z);
 
-      let s = smallScale;
-      let zoomFactor = 0;
-      let rotPhase = 0; // 0..1 for full 360 turn
-      
-      if (t === 0 || t === 1) {
-        // Resting in grid
+      const p = clamp((progress - i * slice) / slice); // 0..1 inside its own slice
+      // scroll-scrubbed (user controlled), so it also runs with reduced motion on
+      const t = p;
+
+      let zoom = 0; // 0 resting → 1 in showcase
+      let spin = 0; // 0..1 → one full turn
+
+      if (t <= 0 || t >= 1) {
         it.group.position.copy(slot);
-        // Add tiny idle float to grid items
-        it.group.position.y += Math.sin(time * 1.5 + i) * 0.1;
-        it.group.rotation.y = 0;
-        it.group.rotation.x = 0;
+        it.group.position.y += Math.sin(time * 1.5 + i) * 0.04 * (reduced ? 0 : 1);
+      } else if (t < 0.3) {
+        // fly out from the column to the centre
+        zoom = easeInOut(t / 0.3);
+        it.group.position.lerpVectors(slot, center, zoom);
+      } else if (t < 0.7) {
+        // hold in the centre and spin 360°
+        zoom = 1;
+        spin = easeInOut((t - 0.3) / 0.4);
+        it.group.position.copy(center);
       } else {
-        // Animating in showcase
-        if (t < 0.5) {
-          // Fly out to center
-          const a = easeOut(t / 0.5); // 0 -> 1
-          it.group.position.lerpVectors(slot, center, a);
-          s = lerp(smallScale, bigScale, a);
-          zoomFactor = a;
-          rotPhase = a * 0.5; // 0 -> 0.5 (180 deg)
-        } else {
-          // Fly back to grid
-          const b = easeInOut((t - 0.5) / 0.5); // 0 -> 1
-          it.group.position.lerpVectors(center, slot, b);
-          s = lerp(bigScale, smallScale, b);
-          zoomFactor = 1 - b;
-          rotPhase = 0.5 + b * 0.5; // 0.5 -> 1.0 (360 deg)
-        }
-        
-        // 360 Y Rotation + slight X tilt
-        it.group.rotation.y = rotPhase * Math.PI * 2;
-        it.group.rotation.x = Math.sin(rotPhase * Math.PI) * 0.25; // tilts down in middle
+        // fly back to its own place
+        spin = 1;
+        zoom = 1 - easeInOut((t - 0.7) / 0.3);
+        it.group.position.lerpVectors(slot, center, zoom);
       }
-      
-      it.group.scale.setScalar(s);
-      
+
+      // gentle arc while travelling so it doesn't move on a dead straight line
+      it.group.position.z += Math.sin(zoom * Math.PI) * 0.6;
+      it.group.rotation.y = spin * Math.PI * 2;
+      it.group.rotation.x = Math.sin(spin * Math.PI) * 0.2;
+      it.group.scale.setScalar(lerp(smallScale, bigScale, zoom));
+
       // Materials
-      const currentOp = lerp(IDLE_OPACITY, ZOOM_OPACITY, zoomFactor);
-      const op = currentOp * fade;
-      
+      const op = lerp(IDLE_OPACITY * restDim, ZOOM_OPACITY * showDim, zoom) * fade;
+
       it.tileMat.opacity = op;
-      it.tileMat.emissiveIntensity = lerp(0.05, 1.5, zoomFactor);
-      it.edges.material.opacity = lerp(0.3, 1.0, zoomFactor) * fade;
-      
-      // Hide label while resting in grid to keep it compact. Show when zooming.
-      it.label.material.opacity = lerp(0.0, op, Math.pow(zoomFactor, 0.5));
-      
-      it.emblem.children.forEach(child => {
+      it.tileMat.emissiveIntensity = lerp(0.08, 1.5, zoom);
+      it.edges.material.opacity = lerp(0.35, 1.0, zoom) * fade * restDim;
+
+      // label only appears in the showcase
+      it.label.material.opacity = lerp(0, op, Math.pow(zoom, 0.5)) * labelDim;
+
+      it.emblem.children.forEach((child) => {
         if (child.material) {
           child.material.transparent = true;
           child.material.opacity = op;
           if (child.material.emissive) {
-            child.material.emissiveIntensity = lerp(0, 1.0, zoomFactor);
+            child.material.emissiveIntensity = lerp(0, 1.0, zoom);
           }
         }
       });
-      
-      it.pLight.intensity = lerp(0, 25, Math.pow(zoomFactor, 1.5)) * fade;
+
+      it.pLight.intensity = lerp(0, 25, Math.pow(zoom, 1.5)) * fade;
     });
   }
 
