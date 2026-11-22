@@ -65,7 +65,6 @@ export function Footer() {
     <footer className="site-footer">
       <div className="wrap site-footer__inner">
         <p>© 2026 {profile.name} · {profile.role}</p>
-        <p className="muted">Built with React, Three.js, GSAP and Lenis.</p>
         <a href="#hero" className="link">
           Back to top <Arrow dir="ne" />
         </a>
