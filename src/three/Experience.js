@@ -19,7 +19,7 @@ export function initialState() {
     glow0: 0, glow1: 0, glow2: 0,
     lapX: 0, lapY: 0, lapS: 0.8, lapRotY: -0.5, lapRotX: 0.32, lid: 1, lapOp: 1,
     brainOp: 0, brainS: 0.6, brainRotY: -0.5, brainRotX: 0.12, brainX: 0, brainY: 0,
-    logoP: 0, logoFade: 0, scroll: 0,
+    logoP: 0, logoFade: 0, partOp: 1, scroll: 0,
   };
 }
 
@@ -42,6 +42,8 @@ export class Experience {
     };
     this.mouse = { x: 0, y: 0, tx: 0, ty: 0 };
     this.activeProject = -1;
+    /** Tech Stack text panel bounds in px, measured by the choreography. */
+    this.techPanel = null;
     this.pointerFine = window.matchMedia('(pointer: fine)').matches;
 
     const renderer = new THREE.WebGLRenderer({
@@ -212,10 +214,13 @@ export class Experience {
 
     // logos
     this.logos.update(t, {
-      progress: S.logoP, fade: S.logoFade, hw: L.hw, hh: L.hh, mobile: L.mobile, reduced: this.reduced,
+      progress: S.logoP, fade: S.logoFade, hw: L.hw, hh: L.hh, w: L.w,
+      panel: this.techPanel || null, mobile: L.mobile, reduced: this.reduced,
     });
 
-    // particles + light camera parallax
+    // particles (hidden during the tech stack section) + light camera parallax
+    this.particles.material.opacity = 0.7 * S.partOp;
+    this.particles.visible = S.partOp > 0.01;
     this.particles.rotation.y = t * 0.012 * idle;
     this.particles.position.y = S.scroll * 0.35;
     this.camera.position.x = m.x * 0.25;

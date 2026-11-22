@@ -773,7 +773,8 @@ h4 {
 
 /* ── Tech Stack ────────────────────────────────────────── */
 .tech {
-  height: 250vh;
+  /* ~50vh of scroll per logo showcase (6 logos) while the panel is pinned */
+  height: 400vh;
   padding: 0;
   display: block;
 }
@@ -784,6 +785,17 @@ h4 {
   height: 100vh;
   display: flex;
   align-items: center;
+}
+
+/* leave room for the 3D logo column on the left edge */
+@media (min-width: 768px) {
+  .tech .wrap {
+    padding-left: 150px;
+  }
+
+  .tech .col--right {
+    margin-left: auto;
+  }
 }
 
 .tech__groups {
