@@ -138,28 +138,32 @@ export function buildMaster(exp, { reduced }) {
   }
   to({ brainOp: 0 }, E.e, 0.7, 'power1.in');
 
-  // ── 8 · Achievements: stack + laptop return on the left ──
+  // ── 8 · Achievements: 3D LeetCode Trophy & Algorithmic Hologram ──
   to(
-    {
-      ...side(Lx, { d: { stackY: 1.15, stackS: 0.5, lapY: -0.95, lapS: 0.78 } }),
-      lapRotY: reduced ? 0.2 : 0.45,
-      lapRotX: 0.32,
-    },
-    E.e + 0.05,
+    mobile
+      ? { trophyX: 0, trophyY: 1.1, trophyS: 0.65, trophyOp: dim, stackOp: 0, lapOp: 0 }
+      : { trophyX: Lx, trophyY: -0.15, trophyS: 0.95, trophyOp: 1, stackOp: 0, lapOp: 0 },
+    C.s - 0.85,
     0.9,
     'power3.out'
   );
+  if (!reduced) {
+    to({ trophyRotY: Math.PI * 1.5 }, C.s, Math.max(0.6, C.e - C.s), 'none');
+  }
+  to({ trophyOp: 0 }, C.e - 0.05, 0.6, 'power2.in');
 
-  // ── 9 · Contact ─────────────────────────────────────────
+  // ── 9 · Contact: 3D Holographic Network Globe ──
   to(
-    {
-      ...side(Lx, { d: { stackY: 1.2, stackS: 0.6, lapY: -1.0, lapS: 0.85 } }),
-      lapRotY: reduced ? 0.2 : 0.35,
-      ...(reduced ? {} : { stackSpin: Math.PI * 2.5 }),
-    },
-    N.s - 0.9,
-    0.85
+    mobile
+      ? { globeX: 0, globeY: 1.1, globeS: 0.65, globeOp: dim, stackOp: 0, lapOp: 0 }
+      : { globeX: Lx, globeY: -0.15, globeS: 0.95, globeOp: 1, stackOp: 0, lapOp: 0 },
+    N.s - 0.85,
+    0.85,
+    'power3.out'
   );
+  if (!reduced) {
+    to({ globeRotY: Math.PI * 0.8 }, N.s, Math.max(0.6, N.e - N.s), 'none');
+  }
 
   tl.set({}, {}, total); // pad duration so time === scroll / vh
 

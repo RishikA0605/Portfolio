@@ -3,10 +3,13 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import gsap from 'gsap';
 import { createStack } from './stack.js';
 import { createLaptop } from './laptop.js';
+import { createPhone } from './phone.js';
 import { createBrain } from './brain.js';
 import { createLogos } from './logos.js';
+import { createTrophy } from './trophy.js';
+import { createGlobe } from './globe.js';
 import { createParticles } from './particles.js';
-import { createProjectScreens } from './screens.js';
+import { createProjectScreens, createMobileProjectScreens } from './screens.js';
 import { disposeObject } from './utils.js';
 
 const FOV = 35;
@@ -19,6 +22,8 @@ export function initialState() {
     glow0: 0, glow1: 0, glow2: 0,
     lapX: 0, lapY: 0, lapS: 0.8, lapRotY: -0.5, lapRotX: 0.32, lid: 1, lapOp: 1,
     brainOp: 0, brainS: 0.6, brainRotY: -0.5, brainRotX: 0.12, brainX: 0, brainY: 0,
+    trophyOp: 0, trophyS: 0.85, trophyX: 0, trophyY: 0, trophyRotY: 0, trophyRotX: 0,
+    globeOp: 0, globeS: 0.95, globeX: 0, globeY: 0, globeRotY: 0, globeRotX: 0,
     logoP: 0, logoFade: 0, partOp: 1, scroll: 0,
   };
 }
@@ -79,14 +84,18 @@ export class Experience {
 
     this.stack = createStack();
     this.laptop = createLaptop();
+    this.phone = createPhone();
     this.brain = createBrain();
+    this.trophy = createTrophy();
+    this.globe = createGlobe();
     this.logos = createLogos({ light });
     this.particles = createParticles({
       count: window.innerWidth < 768 ? 280 : 600,
       color: light ? '#6b6890' : '#9a98b4',
     });
     this.screens = createProjectScreens(projects);
-    scene.add(this.particles, this.logos.group, this.brain.group, this.laptop.group, this.stack.group);
+    this.mobileScreens = createMobileProjectScreens(projects);
+    scene.add(this.particles, this.logos.group, this.brain.group, this.trophy.group, this.globe.group, this.laptop.group, this.phone.group, this.stack.group);
 
     this.clock = new THREE.Clock();
     this.resize();
@@ -152,12 +161,22 @@ export class Experience {
       duration: 0.6, ease: 'power2.out', overwrite: true,
     });
     const tex = p ? this.screens[index] : null;
+    const mobTex = p ? this.mobileScreens[index] : null;
     if (this.reduced) {
       this.laptop.setScreen(tex);
+      this.phone.setScreen(mobTex);
       return;
     }
     gsap.timeline({ overwrite: true })
-      .to(this.fx.flash, { v: 1, duration: 0.14, ease: 'power1.in', onComplete: () => this.laptop.setScreen(tex) })
+      .to(this.fx.flash, {
+        v: 1,
+        duration: 0.14,
+        ease: 'power1.in',
+        onComplete: () => {
+          this.laptop.setScreen(tex);
+          this.phone.setScreen(mobTex);
+        },
+      })
       .to(this.fx.flash, { v: 0, duration: 0.35, ease: 'power2.out' });
   }
 
@@ -167,6 +186,11 @@ export class Experience {
     gsap.timeline({ overwrite: true })
       .to(this.fx.pulse, { v: 1, duration: 0.22, ease: 'power2.out' })
       .to(this.fx.pulse, { v: 0, duration: 1.0, ease: 'power2.inOut' });
+  }
+
+  /** Trigger interactive network pulse and communication waves on the 3D globe when hovering email. */
+  setMailHover(hovered) {
+    this.globe?.setHover(hovered);
   }
 
   tick() {
@@ -205,12 +229,54 @@ export class Experience {
     lp.body.rotation.set(S.lapRotX + m.y * 0.08, S.lapRotY + m.x * 0.18, 0);
     lp.update(dt, { lid: S.lid * fx.intro.lid, opacity: S.lapOp * fx.intro.lapOp, flash: fx.flash.v });
 
+    // companion smartphone (dual-device project showcase)
+    const ph = this.phone;
+    // Positioned to the right and in front of the laptop base so the right corner never overlaps the phone screen
+    const phoneOffsetX = L.mobile ? 0.78 : 1.92;
+    const phoneOffsetY = L.mobile ? -0.22 : -0.18;
+    const phoneOffsetZ = L.mobile ? 1.35 : 1.45;
+    ph.group.position.set(
+      S.lapX + phoneOffsetX * S.lapS,
+      S.lapY + phoneOffsetY * S.lapS + Math.sin(t * 1.35 + 2.4) * 0.038 * idle,
+      phoneOffsetZ
+    );
+    ph.group.scale.setScalar(S.lapS * (L.mobile ? 0.74 : 0.9));
+    ph.body.rotation.set(
+      0.14 + m.y * 0.05,
+      -0.28 + m.x * 0.12,
+      -0.03
+    );
+    ph.group.renderOrder = 10;
+    ph.update(dt, { opacity: S.lapOp * fx.intro.lapOp, flash: fx.flash.v });
+
     // brain
     const br = this.brain;
     br.group.position.set(S.brainX, S.brainY, -1);
     br.group.scale.setScalar(S.brainS);
     br.inner.rotation.set(S.brainRotX, S.brainRotY, 0);
     br.update(t, { opacity: S.brainOp, pulse: fx.pulse.v, reduced: this.reduced });
+
+    // trophy (LeetCode achievements)
+    const tr = this.trophy;
+    tr.group.position.set(S.trophyX, S.trophyY, 0);
+    tr.group.scale.setScalar(S.trophyS);
+    tr.body.rotation.set(
+      S.trophyRotX + m.y * 0.1,
+      S.trophyRotY + m.x * 0.18,
+      0
+    );
+    tr.update(t, { opacity: S.trophyOp, reduced: this.reduced });
+
+    // globe (Contact 3D Holographic Network Globe)
+    const gb = this.globe;
+    gb.group.position.set(S.globeX, S.globeY, 0);
+    gb.group.scale.setScalar(S.globeS);
+    gb.body.rotation.set(
+      S.globeRotX + m.y * 0.1,
+      S.globeRotY + m.x * 0.18,
+      0
+    );
+    gb.update(t, dt, { opacity: S.globeOp, reduced: this.reduced });
 
     // logos
     this.logos.update(t, {
@@ -236,6 +302,7 @@ export class Experience {
     window.removeEventListener('pointermove', this._onMove);
     gsap.killTweensOf([this.fx.intro, this.fx.layers, this.fx.pulse, this.fx.flash]);
     this.screens.forEach((t) => t.dispose());
+    this.mobileScreens.forEach((t) => t.dispose());
     this.laptop.codeTexture.dispose();
     disposeObject(this.scene);
     this.envTex.dispose();

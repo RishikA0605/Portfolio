@@ -31,7 +31,7 @@ export function initSite({ canvas, projects }) {
   let exp = null;
   let master = null;
   const timers = [];
-  const ctx = gsap.context(() => {});
+  const ctx = gsap.context(() => { });
 
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   window.scrollTo(0, 0);
@@ -93,16 +93,16 @@ export function initSite({ canvas, projects }) {
   ]);
   const ready = webglAvailable()
     ? import('../three/Experience.js')
-        .then(async (m) => {
-          await fonts;
-          if (disposed) return;
-          exp = new m.Experience(canvas, { reduced, light, projects });
-        })
-        .catch((err) => {
-          console.warn('[portfolio] WebGL scene unavailable, using static hero.', err);
-          exp = null;
-          fallback();
-        })
+      .then(async (m) => {
+        await fonts;
+        if (disposed) return;
+        exp = new m.Experience(canvas, { reduced, light, projects });
+      })
+      .catch((err) => {
+        console.warn('[portfolio] WebGL scene unavailable, using static hero.', err);
+        exp = null;
+        fallback();
+      })
     : (fallback(), fonts);
 
   Promise.all([typed, Promise.race([ready, wait(8000)])]).then(() => {
@@ -222,6 +222,15 @@ export function initSite({ canvas, projects }) {
         onToggle: (self) => (self.isActive ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current')),
       });
     });
+
+    // contact email hover → 3D digital envelope particle burst
+    const mailBtn = document.getElementById('contact-email');
+    if (mailBtn) {
+      mailBtn.addEventListener('mouseenter', () => exp?.setMailHover(true));
+      mailBtn.addEventListener('mouseleave', () => exp?.setMailHover(false));
+      mailBtn.addEventListener('touchstart', () => exp?.setMailHover(true), { passive: true });
+      mailBtn.addEventListener('touchend', () => exp?.setMailHover(false), { passive: true });
+    }
   }
 
   // ── resize: rebuild the master timeline with fresh measurements ──

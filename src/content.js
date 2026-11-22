@@ -59,6 +59,8 @@ export const techStack = [
  *  - screen   : built-in code-drawn laptop preview ('devsync' | 'adventra' | 'restaurant').
  *  - screenImage : optional path to a real screenshot in /public (e.g. '/screens/devsync.webp').
  *                  When set, it replaces the code-drawn preview on the laptop screen.
+ *  - screenImageMobile : optional path to a mobile screenshot in /public (e.g. '/screens/devsync-mobile.webp').
+ *                        When set, it replaces the code-drawn preview on the companion 3D smartphone.
  */
 export const projects = [
   {
@@ -72,6 +74,7 @@ export const projects = [
     links: { live: '#', github: '#' },
     screen: 'devsync',
     screenImage: null,
+    screenImageMobile: null,
   },
   {
     id: 'adventra',
@@ -84,6 +87,7 @@ export const projects = [
     links: { live: '#', github: '#' },
     screen: 'adventra',
     screenImage: null,
+    screenImageMobile: null,
   },
   {
     id: 'restaurant',
@@ -96,6 +100,7 @@ export const projects = [
     links: { live: '#', github: '#' },
     screen: 'restaurant',
     screenImage: null,
+    screenImageMobile: null,
   },
 ];
 
