@@ -6,6 +6,8 @@ import { createLaptop } from './laptop.js';
 import { createPhone } from './phone.js';
 import { createBrain } from './brain.js';
 import { createLogos } from './logos.js';
+import { createTrophy } from './trophy.js';
+import { createGlobe } from './globe.js';
 import { createParticles } from './particles.js';
 import { createProjectScreens, createMobileProjectScreens } from './screens.js';
 import { disposeObject } from './utils.js';
@@ -20,6 +22,8 @@ export function initialState() {
     glow0: 0, glow1: 0, glow2: 0,
     lapX: 0, lapY: 0, lapS: 0.8, lapRotY: -0.5, lapRotX: 0.32, lid: 1, lapOp: 1,
     brainOp: 0, brainS: 0.6, brainRotY: -0.5, brainRotX: 0.12, brainX: 0, brainY: 0,
+    trophyOp: 0, trophyS: 0.85, trophyX: 0, trophyY: 0, trophyRotY: 0, trophyRotX: 0,
+    globeOp: 0, globeS: 0.95, globeX: 0, globeY: 0, globeRotY: 0, globeRotX: 0,
     logoP: 0, logoFade: 0, partOp: 1, scroll: 0,
   };
 }
@@ -82,6 +86,8 @@ export class Experience {
     this.laptop = createLaptop();
     this.phone = createPhone();
     this.brain = createBrain();
+    this.trophy = createTrophy();
+    this.globe = createGlobe();
     this.logos = createLogos({ light });
     this.particles = createParticles({
       count: window.innerWidth < 768 ? 280 : 600,
@@ -89,7 +95,7 @@ export class Experience {
     });
     this.screens = createProjectScreens(projects);
     this.mobileScreens = createMobileProjectScreens(projects);
-    scene.add(this.particles, this.logos.group, this.brain.group, this.laptop.group, this.phone.group, this.stack.group);
+    scene.add(this.particles, this.logos.group, this.brain.group, this.trophy.group, this.globe.group, this.laptop.group, this.phone.group, this.stack.group);
 
     this.clock = new THREE.Clock();
     this.resize();
@@ -182,6 +188,11 @@ export class Experience {
       .to(this.fx.pulse, { v: 0, duration: 1.0, ease: 'power2.inOut' });
   }
 
+  /** Trigger interactive network pulse and communication waves on the 3D globe when hovering email. */
+  setMailHover(hovered) {
+    this.globe?.setHover(hovered);
+  }
+
   tick() {
     const dt = Math.min(this.clock.getDelta(), 0.05);
     const t = this.clock.elapsedTime;
@@ -244,6 +255,28 @@ export class Experience {
     br.group.scale.setScalar(S.brainS);
     br.inner.rotation.set(S.brainRotX, S.brainRotY, 0);
     br.update(t, { opacity: S.brainOp, pulse: fx.pulse.v, reduced: this.reduced });
+
+    // trophy (LeetCode achievements)
+    const tr = this.trophy;
+    tr.group.position.set(S.trophyX, S.trophyY, 0);
+    tr.group.scale.setScalar(S.trophyS);
+    tr.body.rotation.set(
+      S.trophyRotX + m.y * 0.1,
+      S.trophyRotY + m.x * 0.18,
+      0
+    );
+    tr.update(t, { opacity: S.trophyOp, reduced: this.reduced });
+
+    // globe (Contact 3D Holographic Network Globe)
+    const gb = this.globe;
+    gb.group.position.set(S.globeX, S.globeY, 0);
+    gb.group.scale.setScalar(S.globeS);
+    gb.body.rotation.set(
+      S.globeRotX + m.y * 0.1,
+      S.globeRotY + m.x * 0.18,
+      0
+    );
+    gb.update(t, dt, { opacity: S.globeOp, reduced: this.reduced });
 
     // logos
     this.logos.update(t, {
