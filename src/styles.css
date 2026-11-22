@@ -270,20 +270,24 @@ h3,
   display: flex;
 }
 
+/* Solid letters that fade out toward the bottom: readable at a glance,
+   but quiet enough to stay behind the content. One element, one colour. */
 .backdrop-name {
   font-size: clamp(120px, 30vw, 400px);
   font-weight: 800;
-  color: transparent;
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.04);
   white-space: nowrap;
-  line-height: 0.8;
+  line-height: 0.9;
   letter-spacing: -0.05em;
   padding-left: 5vw;
+  color: transparent;
+  background: linear-gradient(180deg, rgba(237, 234, 245, 0.09) 0%, rgba(237, 234, 245, 0.025) 70%, rgba(237, 234, 245, 0) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 @media (prefers-color-scheme: light) {
   .backdrop-name {
-    -webkit-text-stroke: 1px rgba(0, 0, 0, 0.04);
+    background-image: linear-gradient(180deg, rgba(21, 23, 43, 0.08) 0%, rgba(21, 23, 43, 0.02) 70%, rgba(21, 23, 43, 0) 100%);
   }
 }
 
