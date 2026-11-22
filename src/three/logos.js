@@ -1,4 +1,4 @@
-﻿import * as THREE from 'three';
+import * as THREE from 'three';
 import { makeCanvas, toTexture } from './textures.js';
 import { clamp, lerp, easeOut, easeInOut } from './utils.js';
 
@@ -191,9 +191,9 @@ export function createLogos({ light }) {
     // ── column on the left edge ──
     const span = halfH * (mobile ? 1.25 : 1.45);
     const step = span / (n - 1);
-    const tile = Math.min(step * 0.8, (mobile ? 40 : 84) * wpp);
+    const tile = Math.min(step * 0.8, (mobile ? 34 : 84) * wpp);
     const smallScale = tile / TILE;
-    const margin = (mobile ? 10 : 40) * wpp;
+    const margin = (mobile ? 8 : 40) * wpp;
     const slideIn = (1 - easeOut(clamp(fade))) * (tile + margin) * 1.6;
     const colX = -halfW + margin + tile / 2 - slideIn;
     const colY = -halfH * 0.05;
@@ -207,18 +207,25 @@ export function createLogos({ light }) {
       if (pL - gapL >= gapR - pR) gapR = pL;
       else gapL = pR;
     }
-    // no real gap (phones / narrow tablets) → showcase over the text, softened
+    // no real gap (phones / narrow tablets) → showcase centred behind the
+    // frosted text panel: still visible, but the copy stays in focus
     const compact = mobile || gapR - gapL < 2.2;
     if (compact) {
-      gapL = -halfW;
-      gapR = halfW;
+      if (panel && panel.right > panel.left) {
+        gapL = pxToX(panel.left);
+        gapR = pxToX(panel.right);
+      } else {
+        gapL = -halfW;
+        gapR = halfW;
+      }
     }
     const gap = gapR - gapL;
-    center.set((gapL + gapR) / 2, halfH * 0.12, COL_Z);
-    const bigScale = clamp(Math.min(gap * 0.62, halfH * 0.95) / TILE, smallScale * 1.6, 1.15);
+    center.set((gapL + gapR) / 2, halfH * (compact ? 0.05 : 0.12), COL_Z);
+    const bigScale = clamp(Math.min(gap * (compact ? 0.55 : 0.62), halfH * 0.95) / TILE, smallScale * 1.6, 1.15);
 
-    const restDim = mobile ? 0.4 : 1;
-    const showDim = compact ? 0.55 : 1;
+    const restDim = 1; // the column sits beside the text on every screen size now
+    const showDim = compact ? 0.8 : 1;
+    const labelDim = compact ? 0.45 : 1;
     const slice = 1 / n;
 
     items.forEach((it, i) => {
@@ -264,7 +271,7 @@ export function createLogos({ light }) {
       it.edges.material.opacity = lerp(0.35, 1.0, zoom) * fade * restDim;
 
       // label only appears in the showcase
-      it.label.material.opacity = lerp(0, op, Math.pow(zoom, 0.5));
+      it.label.material.opacity = lerp(0, op, Math.pow(zoom, 0.5)) * labelDim;
 
       it.emblem.children.forEach((child) => {
         if (child.material) {

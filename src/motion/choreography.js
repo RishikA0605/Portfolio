@@ -15,6 +15,14 @@ export function buildMaster(exp, { reduced }) {
   const scrollY = window.scrollY;
   const total = Math.max(1, (document.documentElement.scrollHeight - vh) / vh);
 
+  // Tech panel can be taller than a phone screen: pin it so its bottom edge
+  // meets the viewport bottom instead of its top (nothing gets cut off).
+  const techSticky = document.querySelector('.tech__sticky');
+  if (techSticky) {
+    techSticky.style.removeProperty('--tech-top');
+    techSticky.style.setProperty('--tech-top', `${Math.min(0, vh - techSticky.offsetHeight)}px`);
+  }
+
   const sec = (id) => {
     const el = document.getElementById(id);
     const top = el.getBoundingClientRect().top + scrollY;
