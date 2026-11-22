@@ -3,10 +3,11 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import gsap from 'gsap';
 import { createStack } from './stack.js';
 import { createLaptop } from './laptop.js';
+import { createPhone } from './phone.js';
 import { createBrain } from './brain.js';
 import { createLogos } from './logos.js';
 import { createParticles } from './particles.js';
-import { createProjectScreens } from './screens.js';
+import { createProjectScreens, createMobileProjectScreens } from './screens.js';
 import { disposeObject } from './utils.js';
 
 const FOV = 35;
@@ -79,6 +80,7 @@ export class Experience {
 
     this.stack = createStack();
     this.laptop = createLaptop();
+    this.phone = createPhone();
     this.brain = createBrain();
     this.logos = createLogos({ light });
     this.particles = createParticles({
@@ -86,7 +88,8 @@ export class Experience {
       color: light ? '#6b6890' : '#9a98b4',
     });
     this.screens = createProjectScreens(projects);
-    scene.add(this.particles, this.logos.group, this.brain.group, this.laptop.group, this.stack.group);
+    this.mobileScreens = createMobileProjectScreens(projects);
+    scene.add(this.particles, this.logos.group, this.brain.group, this.laptop.group, this.phone.group, this.stack.group);
 
     this.clock = new THREE.Clock();
     this.resize();
@@ -152,12 +155,22 @@ export class Experience {
       duration: 0.6, ease: 'power2.out', overwrite: true,
     });
     const tex = p ? this.screens[index] : null;
+    const mobTex = p ? this.mobileScreens[index] : null;
     if (this.reduced) {
       this.laptop.setScreen(tex);
+      this.phone.setScreen(mobTex);
       return;
     }
     gsap.timeline({ overwrite: true })
-      .to(this.fx.flash, { v: 1, duration: 0.14, ease: 'power1.in', onComplete: () => this.laptop.setScreen(tex) })
+      .to(this.fx.flash, {
+        v: 1,
+        duration: 0.14,
+        ease: 'power1.in',
+        onComplete: () => {
+          this.laptop.setScreen(tex);
+          this.phone.setScreen(mobTex);
+        },
+      })
       .to(this.fx.flash, { v: 0, duration: 0.35, ease: 'power2.out' });
   }
 
@@ -205,6 +218,24 @@ export class Experience {
     lp.body.rotation.set(S.lapRotX + m.y * 0.08, S.lapRotY + m.x * 0.18, 0);
     lp.update(dt, { lid: S.lid * fx.intro.lid, opacity: S.lapOp * fx.intro.lapOp, flash: fx.flash.v });
 
+    // companion smartphone (dual-device project showcase)
+    const ph = this.phone;
+    const phoneOffsetX = L.mobile ? 0.68 : 1.52;
+    const phoneOffsetY = L.mobile ? -0.28 : -0.25;
+    const phoneOffsetZ = L.mobile ? 0.85 : 0.65;
+    ph.group.position.set(
+      S.lapX + phoneOffsetX * S.lapS,
+      S.lapY + phoneOffsetY * S.lapS + Math.sin(t * 1.35 + 2.4) * 0.038 * idle,
+      phoneOffsetZ
+    );
+    ph.group.scale.setScalar(S.lapS * (L.mobile ? 0.72 : 0.88));
+    ph.body.rotation.set(
+      0.16 + m.y * 0.06,
+      -0.34 + m.x * 0.14,
+      -0.05
+    );
+    ph.update(dt, { opacity: S.lapOp * fx.intro.lapOp, flash: fx.flash.v });
+
     // brain
     const br = this.brain;
     br.group.position.set(S.brainX, S.brainY, -1);
@@ -236,6 +267,7 @@ export class Experience {
     window.removeEventListener('pointermove', this._onMove);
     gsap.killTweensOf([this.fx.intro, this.fx.layers, this.fx.pulse, this.fx.flash]);
     this.screens.forEach((t) => t.dispose());
+    this.mobileScreens.forEach((t) => t.dispose());
     this.laptop.codeTexture.dispose();
     disposeObject(this.scene);
     this.envTex.dispose();
