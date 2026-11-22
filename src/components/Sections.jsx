@@ -61,11 +61,11 @@ export function About() {
           <p className="body-l" data-reveal>
             {about.text}
           </p>
-          <pre className="diff" data-reveal aria-label="Version diff: v1.0 frontend, v2.0 frontend, API and database">
+          <pre className="diff" data-reveal aria-label="Version diff: v1.0 client-side interfaces, v2.0 distributed full-stack systems">
             <code>
-              <span className="diff__del">- v1.0  frontend</span>
+              <span className="diff__del">- v1.0  client-side interfaces</span>
               {'\n'}
-              <span className="diff__add">+ v2.0  frontend + api + database</span>
+              <span className="diff__add">+ v2.0  distributed full-stack systems (UI · API · DB)</span>
             </code>
           </pre>
         </div>
@@ -80,9 +80,9 @@ export function Layers() {
       <div className="layers__sticky">
         <div className="wrap layers__inner">
           <div className="col col--left">
-            <p className="eyebrow">Full stack, taken apart</p>
+            <p className="eyebrow">Full-Stack Architecture</p>
             <h2 id="layers-title" className="h2 h2--sm">
-              Three layers. <span className="muted">One developer.</span>
+              Three layers. <span className="muted">Unified engineering.</span>
             </h2>
             <ol className="layer-labels" role="list">
               {layers.map((l) => (
@@ -180,7 +180,7 @@ export function Experience() {
         <div className="col col--left">
           <p className="eyebrow eyebrow--teal" data-reveal>CHANGELOG.md</p>
           <h2 id="experience-title" className="h2" data-reveal>
-            Release notes
+            Career Changelog & Releases
           </h2>
           <ol className="timeline" role="list">
             {experience.map((r) => (
@@ -219,7 +219,7 @@ export function Achievements() {
         <div className="col col--right panel-m">
           <p className="eyebrow" data-reveal>achievements.log</p>
           <h2 id="achievements-title" className="h2" data-reveal>
-            Achievements
+            Technical Achievements & Metrics
           </h2>
           <div className="leet" data-reveal>
             <div className="leet__head">
