@@ -220,20 +220,22 @@ export class Experience {
 
     // companion smartphone (dual-device project showcase)
     const ph = this.phone;
-    const phoneOffsetX = L.mobile ? 0.68 : 1.52;
-    const phoneOffsetY = L.mobile ? -0.28 : -0.25;
-    const phoneOffsetZ = L.mobile ? 0.85 : 0.65;
+    // Positioned to the right and in front of the laptop base so the right corner never overlaps the phone screen
+    const phoneOffsetX = L.mobile ? 0.78 : 1.92;
+    const phoneOffsetY = L.mobile ? -0.22 : -0.18;
+    const phoneOffsetZ = L.mobile ? 1.35 : 1.45;
     ph.group.position.set(
       S.lapX + phoneOffsetX * S.lapS,
       S.lapY + phoneOffsetY * S.lapS + Math.sin(t * 1.35 + 2.4) * 0.038 * idle,
       phoneOffsetZ
     );
-    ph.group.scale.setScalar(S.lapS * (L.mobile ? 0.72 : 0.88));
+    ph.group.scale.setScalar(S.lapS * (L.mobile ? 0.74 : 0.9));
     ph.body.rotation.set(
-      0.16 + m.y * 0.06,
-      -0.34 + m.x * 0.14,
-      -0.05
+      0.14 + m.y * 0.05,
+      -0.28 + m.x * 0.12,
+      -0.03
     );
+    ph.group.renderOrder = 10;
     ph.update(dt, { opacity: S.lapOp * fx.intro.lapOp, flash: fx.flash.v });
 
     // brain
