@@ -171,15 +171,15 @@ function drawDevSync(ctx) {
 
     const cards = idx === 0
       ? [
-          { title: 'Prisma Connection Pool', tag: 'DB', col: '#8ce0b0' },
-          { title: 'Redis Cache Layer', tag: 'API', col: '#ffb86b' },
-          { title: 'Responsive Kanban DnD', tag: 'UI', col: '#7cc6ff' },
-        ]
+        { title: 'Prisma Connection Pool', tag: 'DB', col: '#8ce0b0' },
+        { title: 'Redis Cache Layer', tag: 'API', col: '#ffb86b' },
+        { title: 'Responsive Kanban DnD', tag: 'UI', col: '#7cc6ff' },
+      ]
       : [
-          { title: 'NextAuth GitHub SSO', tag: 'SEC', col: '#7cc6ff' },
-          { title: 'Websocket Rooms', tag: 'NET', col: '#c3a6ff' },
-          { title: 'Cloudinary CDN upload', tag: 'API', col: '#8ce0b0' },
-        ];
+        { title: 'NextAuth GitHub SSO', tag: 'SEC', col: '#7cc6ff' },
+        { title: 'Websocket Rooms', tag: 'NET', col: '#c3a6ff' },
+        { title: 'Cloudinary CDN upload', tag: 'API', col: '#8ce0b0' },
+      ];
 
     cards.forEach((card, ci) => {
       const cy = 100 + ci * 125;
