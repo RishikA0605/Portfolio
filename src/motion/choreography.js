@@ -41,6 +41,8 @@ export function buildMaster(exp, { reduced }) {
   const Lx = -R;
   const dim = mobile ? 0.28 : 1; // on mobile the 3D stays soft behind text
   const off = -hw * 1.7;
+  const rightOff = hw * 1.75;
+  const restingBrainX = mobile ? 0 : hw * 0.32;
 
   // ── poses ───────────────────────────────────────────────
   const side = (x, o = {}) =>
@@ -53,7 +55,7 @@ export function buildMaster(exp, { reduced }) {
     : { stackX: R, stackY: 1.2, stackS: 0.55, lapX: R, lapY: -1.05, lapS: 0.82, lapRotY: -0.5 };
 
   Object.assign(S, initialState(), hero, {
-    brainX: mobile ? 0 : hw * 0.3,
+    brainX: rightOff,
     brainY: mobile ? 0.2 : -0.1,
     brainS: mobile ? 0.5 : reduced ? 1 : 0.6,
     brainRotY: reduced ? 0.2 : -0.5,
@@ -96,18 +98,26 @@ export function buildMaster(exp, { reduced }) {
   });
   tl.to(labels, { autoAlpha: 0, y: -24, duration: 0.25, stagger: 0.04, ease: 'power2.in' }, at(Y.e - 0.4));
 
-  // ── 5 · Tech stack: stack, laptop + particles step aside; logos own the stage ──
-  // Logos sit in a column on the left edge; one by one they fly to the empty
-  // space beside the text, spin 360° and return (see three/logos.js).
+  // ── 5 · Tech stack: Assembled Stack + Dependency Graph (E + B Hybrid) ──
   const panelEl = T.el.querySelector('.col');
   if (panelEl) {
     const r = panelEl.getBoundingClientRect();
     exp.techPanel = { left: r.left, right: r.right };
   }
-  to({ stackOp: 0, stackS: mobile ? 0.3 : 0.4, stackY: hh * 0.9, lapOp: 0, lapY: -hh * 2.6 }, Y.e - 0.1, 0.6, 'power2.in');
-  to({ partOp: 0 }, Y.e - 0.1, 0.6, 'power1.out');
+  // The 3-layer stack remains visible and transitions to the left, exploded so tools dock on each layer
+  to(
+    mobile
+      ? { stackX: 0, stackY: 1.35, stackS: 0.44, stackOp: dim, explode: 0.9, lapOp: 0, lapY: -hh * 2.6 }
+      : { stackX: Lx, stackY: 0.05, stackS: 0.65, stackOp: 1, explode: 0.95, lapOp: 0, lapY: -hh * 2.6 },
+    Y.e - 0.1,
+    0.65,
+    'power2.inOut'
+  );
+  to({ partOp: 0.35 }, Y.e - 0.1, 0.6, 'power1.out');
   to({ logoFade: 1 }, T.s - 0.7, 0.55, 'power2.out');
   to({ logoP: 1 }, T.s - 0.1, Math.max(0.6, T.e - T.s), 'none');
+  // As the tech stack story concludes, the layers assemble together, uniting the tools into one system
+  to({ explode: 0.15 }, T.e - 0.55, 0.45, 'power2.inOut');
   to({ logoFade: 0 }, T.e - 0.05, 0.5, 'power1.in');
 
   // ── 6 · Projects: stack + laptop return, laptop swings, lid opens wider ──
@@ -125,18 +135,25 @@ export function buildMaster(exp, { reduced }) {
     to({ lapRotY: -0.5, lapRotX: 0.3, lid: 1 }, mid, P.e - mid, 'sine.inOut');
   }
 
-  // ── 7 · Experience: stack + laptop slide off, brain fades in ──
-  to({ stackX: off, lapX: off, stackOp: 0, lapOp: 0 }, E.s - 0.9, 0.8, 'power2.in');
-  to({ brainOp: mobile ? 0.38 : 0.5 }, E.s - 0.7, 0.8, 'power1.out');
+  // ── 7 · Experience: stack + laptop slide off, brain glides in from the right ──
+  to({ stackX: off, lapX: off, stackOp: 0, lapOp: 0, phoneOp: 0 }, E.s - 0.9, 0.8, 'power2.in');
+  to(
+    { brainX: restingBrainX, brainOp: mobile ? 0.38 : 0.55 },
+    E.s - 0.85,
+    0.85,
+    'power3.out'
+  );
   if (!reduced) {
     to(
       { brainS: mobile ? 0.85 : 1.3, brainRotY: 0.5, brainRotX: -0.08 },
       E.s - 0.7,
-      Math.max(0.5, E.e - E.s + 1.1),
+      Math.max(0.5, E.e - E.s + 0.6),
       'none'
     );
   }
-  to({ brainOp: 0 }, E.e, 0.7, 'power1.in');
+  // exit: brain slides out to the right (fades only at the very end once off-screen)
+  to({ brainX: rightOff }, E.e - 0.35, 0.75, 'power2.in');
+  to({ brainOp: 0 }, E.e + 0.2, 0.25, 'power1.in');
 
   // ── 8 · Achievements: 3D LeetCode Trophy & Algorithmic Hologram ──
   to(
@@ -150,20 +167,22 @@ export function buildMaster(exp, { reduced }) {
   if (!reduced) {
     to({ trophyRotY: Math.PI * 1.5 }, C.s, Math.max(0.6, C.e - C.s), 'none');
   }
-  to({ trophyOp: 0 }, C.e - 0.05, 0.6, 'power2.in');
+  // exit: trophy slides out past the left edge of the screen (fades only at the very end)
+  to({ trophyX: off }, C.e - 0.3, 0.7, 'power2.in');
+  to({ trophyOp: 0 }, C.e + 0.2, 0.2, 'power1.in');
 
-  // ── 9 · Contact: 3D Holographic Network Globe ──
+  // ── 9 · Contact: stack + laptop return; the laptop screen shows the live network globe ──
   to(
-    mobile
-      ? { globeX: 0, globeY: 1.1, globeS: 0.65, globeOp: dim, stackOp: 0, lapOp: 0 }
-      : { globeX: Lx, globeY: -0.15, globeS: 0.95, globeOp: 1, stackOp: 0, lapOp: 0 },
-    N.s - 0.85,
-    0.85,
-    'power3.out'
+    {
+      ...side(Lx, { d: { stackY: 1.2, stackS: 0.6, lapY: -1.0, lapS: 0.85 } }),
+      lapRotY: reduced ? 0.2 : 0.35,
+      ...(reduced ? {} : { stackSpin: Math.PI * 2.5 }),
+    },
+    N.s - 0.9,
+    0.85
   );
-  if (!reduced) {
-    to({ globeRotY: Math.PI * 0.8 }, N.s, Math.max(0.6, N.e - N.s), 'none');
-  }
+  // swap the laptop screen to the globe while the laptop is still off-screen
+  tl.set(S, { screenGlobe: 1 }, at(N.s - 0.92));
 
   tl.set({}, {}, total); // pad duration so time === scroll / vh
 
