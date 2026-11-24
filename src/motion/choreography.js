@@ -41,6 +41,8 @@ export function buildMaster(exp, { reduced }) {
   const Lx = -R;
   const dim = mobile ? 0.28 : 1; // on mobile the 3D stays soft behind text
   const off = -hw * 1.7;
+  const rightOff = hw * 1.75;
+  const restingBrainX = mobile ? 0 : hw * 0.32;
 
   // ── poses ───────────────────────────────────────────────
   const side = (x, o = {}) =>
@@ -53,7 +55,7 @@ export function buildMaster(exp, { reduced }) {
     : { stackX: R, stackY: 1.2, stackS: 0.55, lapX: R, lapY: -1.05, lapS: 0.82, lapRotY: -0.5 };
 
   Object.assign(S, initialState(), hero, {
-    brainX: mobile ? 0 : hw * 0.3,
+    brainX: rightOff,
     brainY: mobile ? 0.2 : -0.1,
     brainS: mobile ? 0.5 : reduced ? 1 : 0.6,
     brainRotY: reduced ? 0.2 : -0.5,
@@ -133,18 +135,25 @@ export function buildMaster(exp, { reduced }) {
     to({ lapRotY: -0.5, lapRotX: 0.3, lid: 1 }, mid, P.e - mid, 'sine.inOut');
   }
 
-  // ── 7 · Experience: stack + laptop slide off, brain fades in ──
+  // ── 7 · Experience: stack + laptop slide off, brain glides in from the right ──
   to({ stackX: off, lapX: off, stackOp: 0, lapOp: 0, phoneOp: 0 }, E.s - 0.9, 0.8, 'power2.in');
-  to({ brainOp: mobile ? 0.38 : 0.5 }, E.s - 0.7, 0.8, 'power1.out');
+  to(
+    { brainX: restingBrainX, brainOp: mobile ? 0.38 : 0.55 },
+    E.s - 0.85,
+    0.85,
+    'power3.out'
+  );
   if (!reduced) {
     to(
       { brainS: mobile ? 0.85 : 1.3, brainRotY: 0.5, brainRotX: -0.08 },
       E.s - 0.7,
-      Math.max(0.5, E.e - E.s + 1.1),
+      Math.max(0.5, E.e - E.s + 0.6),
       'none'
     );
   }
-  to({ brainOp: 0 }, E.e, 0.7, 'power1.in');
+  // exit: brain slides out to the right (fades only at the very end once off-screen)
+  to({ brainX: rightOff }, E.e - 0.35, 0.75, 'power2.in');
+  to({ brainOp: 0 }, E.e + 0.2, 0.25, 'power1.in');
 
   // ── 8 · Achievements: 3D LeetCode Trophy & Algorithmic Hologram ──
   to(
