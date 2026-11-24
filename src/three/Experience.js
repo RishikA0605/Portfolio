@@ -15,6 +15,34 @@ import { disposeObject } from './utils.js';
 const FOV = 35;
 const CAM_Z = 10;
 
+/** Laptop-screen backdrop for the globe: dark HUD with a faint grid and status text. */
+function globeScreenBackground() {
+  const c = document.createElement('canvas');
+  c.width = 1024;
+  c.height = 640;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(512, 320, 40, 512, 320, 620);
+  g.addColorStop(0, '#0d1834');
+  g.addColorStop(1, '#05070f');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 1024, 640);
+  ctx.strokeStyle = 'rgba(63,214,198,0.07)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= 1024; x += 48) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 640); ctx.stroke(); }
+  for (let y = 0; y <= 640; y += 48) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke(); }
+  ctx.font = '600 18px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+  ctx.fillStyle = 'rgba(63,214,198,0.85)';
+  ctx.fillText('● network.status: online', 32, 46);
+  ctx.fillStyle = 'rgba(237,234,245,0.45)';
+  ctx.fillText('nodes: 11   links: 9   latency: 42ms', 32, 74);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(255,184,107,0.8)';
+  ctx.fillText('contact.sh — open to new roles', 992, 608);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
 /** Values driven by the master scroll timeline (see motion/choreography.js). */
 export function initialState() {
   return {
@@ -24,7 +52,7 @@ export function initialState() {
     brainOp: 0, brainS: 0.6, brainRotY: -0.5, brainRotX: 0.12, brainX: 0, brainY: 0,
     trophyOp: 0, trophyS: 0.85, trophyX: 0, trophyY: 0, trophyRotY: 0, trophyRotX: 0,
     globeOp: 0, globeS: 0.95, globeX: 0, globeY: 0, globeRotY: 0, globeRotX: 0,
-    logoP: 0, logoFade: 0, partOp: 1, scroll: 0,
+    logoP: 0, logoFade: 0, partOp: 1, scroll: 0, phoneOp: 1, screenGlobe: 0,
   };
 }
 
@@ -95,7 +123,27 @@ export class Experience {
     });
     this.screens = createProjectScreens(projects);
     this.mobileScreens = createMobileProjectScreens(projects);
-    scene.add(this.particles, this.logos.group, this.brain.group, this.trophy.group, this.globe.group, this.laptop.group, this.phone.group, this.stack.group);
+    scene.add(this.particles, this.logos.group, this.brain.group, this.trophy.group, this.laptop.group, this.phone.group, this.stack.group);
+
+    // Holographic network globe lives in its own scene and is rendered into a
+    // texture that is shown on the laptop screen in the Contact section.
+    this.globeRT = new THREE.WebGLRenderTarget(1024, 640, { samples: 4 });
+    this.globeRT.texture.colorSpace = THREE.SRGBColorSpace;
+    const gScene = new THREE.Scene();
+    gScene.background = globeScreenBackground();
+    gScene.environment = this.envTex;
+    gScene.environmentIntensity = 0.85;
+    gScene.add(new THREE.HemisphereLight('#d6dcff', '#1a1d33', 0.7));
+    const gKey = new THREE.DirectionalLight('#ffffff', 2.0);
+    gKey.position.set(4, 6, 7);
+    const gRim = new THREE.DirectionalLight('#7cc6ff', 2.6);
+    gRim.position.set(-6, 3, -5);
+    gScene.add(gKey, gRim, this.globe.group);
+    this.globeScene = gScene;
+    this.globeCam = new THREE.PerspectiveCamera(35, 1024 / 640, 0.1, 40);
+    this.globeCam.position.set(0, 0.15, 6.4);
+    this.globeCam.lookAt(0, 0, 0);
+    this.screenIsGlobe = false;
 
     this.clock = new THREE.Clock();
     this.resize();
@@ -162,6 +210,10 @@ export class Experience {
     });
     const tex = p ? this.screens[index] : null;
     const mobTex = p ? this.mobileScreens[index] : null;
+    if (this.screenIsGlobe) {
+      this.phone.setScreen(mobTex);
+      return;
+    }
     if (this.reduced) {
       this.laptop.setScreen(tex);
       this.phone.setScreen(mobTex);
@@ -247,7 +299,7 @@ export class Experience {
       -0.03
     );
     ph.group.renderOrder = 10;
-    ph.update(dt, { opacity: S.lapOp * fx.intro.lapOp, flash: fx.flash.v });
+    ph.update(dt, { opacity: S.lapOp * S.phoneOp * fx.intro.lapOp, flash: fx.flash.v });
 
     // brain
     const br = this.brain;
@@ -267,16 +319,21 @@ export class Experience {
     );
     tr.update(t, { opacity: S.trophyOp, reduced: this.reduced });
 
-    // globe (Contact 3D Holographic Network Globe)
-    const gb = this.globe;
-    gb.group.position.set(S.globeX, S.globeY, 0);
-    gb.group.scale.setScalar(S.globeS);
-    gb.body.rotation.set(
-      S.globeRotX + m.y * 0.1,
-      S.globeRotY + m.x * 0.18,
-      0
-    );
-    gb.update(t, dt, { opacity: S.globeOp, reduced: this.reduced });
+    // globe → rendered onto the laptop screen in the Contact section
+    const wantGlobe = S.screenGlobe > 0.5;
+    if (wantGlobe !== this.screenIsGlobe) {
+      this.screenIsGlobe = wantGlobe;
+      const p = this.activeProject;
+      lp.setScreen(wantGlobe ? this.globeRT.texture : p >= 0 ? this.screens[p] : null);
+    }
+    if (wantGlobe && S.lapOp * fx.intro.lapOp > 0.01) {
+      const gb = this.globe;
+      gb.body.rotation.x = 0.18 + m.y * 0.1;
+      gb.update(t, dt, { opacity: 1, reduced: this.reduced });
+      this.renderer.setRenderTarget(this.globeRT);
+      this.renderer.render(this.globeScene, this.globeCam);
+      this.renderer.setRenderTarget(null);
+    }
 
     // logos
     this.logos.update(t, {
@@ -305,6 +362,9 @@ export class Experience {
     this.mobileScreens.forEach((t) => t.dispose());
     this.laptop.codeTexture.dispose();
     disposeObject(this.scene);
+    disposeObject(this.globeScene);
+    this.globeScene.background?.dispose();
+    this.globeRT.dispose();
     this.envTex.dispose();
     this.pmrem.dispose();
     this.renderer.dispose();

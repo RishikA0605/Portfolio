@@ -126,7 +126,7 @@ export function buildMaster(exp, { reduced }) {
   }
 
   // ── 7 · Experience: stack + laptop slide off, brain fades in ──
-  to({ stackX: off, lapX: off, stackOp: 0, lapOp: 0 }, E.s - 0.9, 0.8, 'power2.in');
+  to({ stackX: off, lapX: off, stackOp: 0, lapOp: 0, phoneOp: 0 }, E.s - 0.9, 0.8, 'power2.in');
   to({ brainOp: mobile ? 0.38 : 0.5 }, E.s - 0.7, 0.8, 'power1.out');
   if (!reduced) {
     to(
@@ -150,20 +150,22 @@ export function buildMaster(exp, { reduced }) {
   if (!reduced) {
     to({ trophyRotY: Math.PI * 1.5 }, C.s, Math.max(0.6, C.e - C.s), 'none');
   }
-  to({ trophyOp: 0 }, C.e - 0.05, 0.6, 'power2.in');
+  // exit: trophy slides out past the left edge of the screen (fades only at the very end)
+  to({ trophyX: off }, C.e - 0.3, 0.7, 'power2.in');
+  to({ trophyOp: 0 }, C.e + 0.2, 0.2, 'power1.in');
 
-  // ── 9 · Contact: 3D Holographic Network Globe ──
+  // ── 9 · Contact: stack + laptop return; the laptop screen shows the live network globe ──
   to(
-    mobile
-      ? { globeX: 0, globeY: 1.1, globeS: 0.65, globeOp: dim, stackOp: 0, lapOp: 0 }
-      : { globeX: Lx, globeY: -0.15, globeS: 0.95, globeOp: 1, stackOp: 0, lapOp: 0 },
-    N.s - 0.85,
-    0.85,
-    'power3.out'
+    {
+      ...side(Lx, { d: { stackY: 1.2, stackS: 0.6, lapY: -1.0, lapS: 0.85 } }),
+      lapRotY: reduced ? 0.2 : 0.35,
+      ...(reduced ? {} : { stackSpin: Math.PI * 2.5 }),
+    },
+    N.s - 0.9,
+    0.85
   );
-  if (!reduced) {
-    to({ globeRotY: Math.PI * 0.8 }, N.s, Math.max(0.6, N.e - N.s), 'none');
-  }
+  // swap the laptop screen to the globe while the laptop is still off-screen
+  tl.set(S, { screenGlobe: 1 }, at(N.s - 0.92));
 
   tl.set({}, {}, total); // pad duration so time === scroll / vh
 
