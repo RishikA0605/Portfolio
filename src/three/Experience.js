@@ -267,10 +267,15 @@ export class Experience {
       -Math.PI / 4 + S.stackSpin + fx.intro.spin + m.x * 0.35 + Math.sin(t * 0.5) * 0.05 * idle,
       0
     );
+    const logoGlow = this.logos?.getLayerGlow ? this.logos.getLayerGlow() : [0, 0, 0];
     st.update({
       explode: S.explode,
       dim: [fx.layers.d0, fx.layers.d1, fx.layers.d2],
-      glow: [S.glow0 + fx.layers.g0, S.glow1 + fx.layers.g1, S.glow2 + fx.layers.g2],
+      glow: [
+        S.glow0 + fx.layers.g0 + logoGlow[0] * S.logoFade,
+        S.glow1 + fx.layers.g1 + logoGlow[1] * S.logoFade,
+        S.glow2 + fx.layers.g2 + logoGlow[2] * S.logoFade,
+      ],
       opacity: S.stackOp * Math.min(1, fx.intro.stack * 1.5),
     });
 
@@ -335,10 +340,24 @@ export class Experience {
       this.renderer.setRenderTarget(null);
     }
 
-    // logos
-    this.logos.update(t, {
-      progress: S.logoP, fade: S.logoFade, hw: L.hw, hh: L.hh, w: L.w,
-      panel: this.techPanel || null, mobile: L.mobile, reduced: this.reduced,
+    // logos (Assembled Stack + Dependency Graph)
+    this.logos.update(t, dt, {
+      progress: S.logoP,
+      fade: S.logoFade,
+      hw: L.hw,
+      hh: L.hh,
+      w: L.w,
+      panel: this.techPanel || null,
+      mobile: L.mobile,
+      reduced: this.reduced,
+      stackX: S.stackX,
+      stackY: S.stackY,
+      stackS: S.stackS,
+      explode: S.explode,
+      mx: m.x,
+      my: m.y,
+      pointer: { x: this.mouse.tx, y: this.mouse.ty },
+      camera: this.camera,
     });
 
     // particles (hidden during the tech stack section) + light camera parallax

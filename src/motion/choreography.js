@@ -96,18 +96,26 @@ export function buildMaster(exp, { reduced }) {
   });
   tl.to(labels, { autoAlpha: 0, y: -24, duration: 0.25, stagger: 0.04, ease: 'power2.in' }, at(Y.e - 0.4));
 
-  // ── 5 · Tech stack: stack, laptop + particles step aside; logos own the stage ──
-  // Logos sit in a column on the left edge; one by one they fly to the empty
-  // space beside the text, spin 360° and return (see three/logos.js).
+  // ── 5 · Tech stack: Assembled Stack + Dependency Graph (E + B Hybrid) ──
   const panelEl = T.el.querySelector('.col');
   if (panelEl) {
     const r = panelEl.getBoundingClientRect();
     exp.techPanel = { left: r.left, right: r.right };
   }
-  to({ stackOp: 0, stackS: mobile ? 0.3 : 0.4, stackY: hh * 0.9, lapOp: 0, lapY: -hh * 2.6 }, Y.e - 0.1, 0.6, 'power2.in');
-  to({ partOp: 0 }, Y.e - 0.1, 0.6, 'power1.out');
+  // The 3-layer stack remains visible and transitions to the left, exploded so tools dock on each layer
+  to(
+    mobile
+      ? { stackX: 0, stackY: 1.35, stackS: 0.44, stackOp: dim, explode: 0.9, lapOp: 0, lapY: -hh * 2.6 }
+      : { stackX: Lx, stackY: 0.05, stackS: 0.65, stackOp: 1, explode: 0.95, lapOp: 0, lapY: -hh * 2.6 },
+    Y.e - 0.1,
+    0.65,
+    'power2.inOut'
+  );
+  to({ partOp: 0.35 }, Y.e - 0.1, 0.6, 'power1.out');
   to({ logoFade: 1 }, T.s - 0.7, 0.55, 'power2.out');
   to({ logoP: 1 }, T.s - 0.1, Math.max(0.6, T.e - T.s), 'none');
+  // As the tech stack story concludes, the layers assemble together, uniting the tools into one system
+  to({ explode: 0.15 }, T.e - 0.55, 0.45, 'power2.inOut');
   to({ logoFade: 0 }, T.e - 0.05, 0.5, 'power1.in');
 
   // ── 6 · Projects: stack + laptop return, laptop swings, lid opens wider ──
