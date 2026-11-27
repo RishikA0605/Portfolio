@@ -71,7 +71,7 @@ export const projects = [
     description:
       'Enterprise team collaboration platform featuring bi-directional real-time communication via WebSockets, multi-tenant RBAC permissions, AI copilot workflows, and asynchronous task management with relational integrity.',
     tech: ['Next.js', 'TypeScript', 'PostgreSQL', 'Prisma', 'Socket.io', 'Redis', 'NextAuth', 'Cloudinary', 'Tailwind CSS'],
-    links: { live: '#', github: '#' },
+    links: { live: 'https://dev-sync-ai-alpha.vercel.app/', github: 'https://github.com/RishikA0605/DevSync-AI' },
     screen: 'devsync',
     screenImage: null,
     screenImageMobile: null,
@@ -84,7 +84,7 @@ export const projects = [
     description:
       'High-conversion travel discovery and booking platform featuring dynamic expedition filtering, multi-stage checkout state machine, and performant responsive layouts with sub-second page transitions.',
     tech: ['React', 'TypeScript', 'Tailwind CSS'],
-    links: { live: '#', github: '#' },
+    links: { live: 'https://adventra-web-4m7j.vercel.app/', github: 'https://github.com/RishikA0605/adventra-web' },
     screen: 'adventra',
     screenImage: null,
     screenImageMobile: null,
